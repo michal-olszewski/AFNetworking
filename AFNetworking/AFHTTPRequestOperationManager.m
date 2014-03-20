@@ -105,6 +105,8 @@
     operation.shouldUseCredentialStorage = self.shouldUseCredentialStorage;
     operation.credential = self.credential;
     operation.securityPolicy = self.securityPolicy;
+    operation.completionGroup = self.completionGroup;
+    operation.completionQueue = self.completionQueue;
 
     [operation setCompletionBlockWithSuccess:success failure:failure];
 
