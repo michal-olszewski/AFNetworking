@@ -101,12 +101,9 @@
     operation.shouldUseCredentialStorage = self.shouldUseCredentialStorage;
     operation.credential = self.credential;
     operation.securityPolicy = self.securityPolicy;
+    [operation setCompletionBlockWithSuccess:success failure:failure];
     operation.completionGroup = self.completionGroup ? self.completionGroup : nil;
     operation.completionQueue = (id) (self.completionQueue ? self.completionGroup : nil);
-
-    [operation setCompletionBlockWithSuccess:success failure:failure];
-    operation.completionQueue = self.completionQueue;
-    operation.completionGroup = self.completionGroup;
 
     return operation;
 }
