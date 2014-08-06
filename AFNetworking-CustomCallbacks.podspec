@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = 'AFNetworking-CustomCallbacks'
-  s.version      = '0.1.2'
+  s.version      = '0.1.3'
   s.summary      = 'Custom callback queues for AFNetworking'
   s.description  = <<-DESC
                    Extension to AFHTTPRequestOperationManager class providing support for using custom callback queues.
