@@ -1,4 +1,4 @@
-// AFHTTPSerializationTests.m
+// AFHTTPRequestSerializationTests.m
 // Copyright (c) 2011–2015 Alamofire Software Foundation (http://alamofire.org/)
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -65,6 +65,34 @@
 
 #pragma mark -
 
+- (void)testThatAFHTTPRequestSerializationSerializesPOSTRequestsProperly {
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com"]];
+    request.HTTPMethod = @"POST";
+
+    NSURLRequest *serializedRequest = [self.requestSerializer requestBySerializingRequest:request withParameters:@{@"key":@"value"} error:nil];
+    NSString *contentType = serializedRequest.allHTTPHeaderFields[@"Content-Type"];
+
+    XCTAssertNotNil(contentType);
+    XCTAssertEqualObjects(contentType, @"application/x-www-form-urlencoded");
+
+    XCTAssertNotNil(serializedRequest.HTTPBody);
+    XCTAssertEqualObjects(serializedRequest.HTTPBody, [@"key=value" dataUsingEncoding:NSUTF8StringEncoding]);
+}
+
+- (void)testThatAFHTTPRequestSerializationSerializesPOSTRequestsProperlyWhenNoParameterIsProvided {
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com"]];
+    request.HTTPMethod = @"POST";
+
+    NSURLRequest *serializedRequest = [self.requestSerializer requestBySerializingRequest:request withParameters:nil error:nil];
+    NSString *contentType = serializedRequest.allHTTPHeaderFields[@"Content-Type"];
+
+    XCTAssertNotNil(contentType);
+    XCTAssertEqualObjects(contentType, @"application/x-www-form-urlencoded");
+
+    XCTAssertNotNil(serializedRequest.HTTPBody);
+    XCTAssertEqualObjects(serializedRequest.HTTPBody, [NSData data]);
+}
+
 - (void)testThatAFHTTPRequestSerialiationSerializesQueryParametersCorrectly {
     NSURLRequest *originalRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com"]];
     NSURLRequest *serializedRequest = [self.requestSerializer requestBySerializingRequest:originalRequest withParameters:@{@"key":@"value"} error:nil];
@@ -74,9 +102,9 @@
 
 - (void)testThatAFHTTPRequestSerialiationSerializesURLEncodableQueryParametersCorrectly {
     NSURLRequest *originalRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com"]];
-    NSURLRequest *serializedRequest = [self.requestSerializer requestBySerializingRequest:originalRequest withParameters:@{@"key":@" !\"#$%&'()*+,/"} error:nil];
+    NSURLRequest *serializedRequest = [self.requestSerializer requestBySerializingRequest:originalRequest withParameters:@{@"key":@" :#[]@!$&'()*+,;=/?"} error:nil];
 
-    XCTAssertTrue([[[serializedRequest URL] query] isEqualToString:@"key=%20%21%22%23%24%25%26%27%28%29%2A%2B%2C%2F"], @"Query parameters have not been serialized correctly (%@)", [[serializedRequest URL] query]);
+    XCTAssertTrue([[[serializedRequest URL] query] isEqualToString:@"key=%20%3A%23%5B%5D%40%21%24%26%27%28%29%2A%2B%2C%3B%3D/?"], @"Query parameters have not been serialized correctly (%@)", [[serializedRequest URL] query]);
 }
 
 - (void)testThatAFHTTPRequestSerialiationSerializesURLEncodedQueryParametersCorrectly {
@@ -146,6 +174,24 @@
 
     expect(request).to.beNil();
     expect(error).to.equal(serializerError);
+}
+
+#pragma mark - #3028 tests
+//https://github.com/AFNetworking/AFNetworking/pull/3028
+
+- (void)testThatEmojiIsProperlyEncoded {
+    //Start with an odd number of characters so we can cross the 50 character boundry
+    NSMutableString *parameter = [NSMutableString stringWithString:@"!"];
+    while (parameter.length < 50) {
+        [parameter appendString:@"👴🏿👷🏻👮🏽"];
+    }
+
+    AFHTTPRequestSerializer *serializer = [AFHTTPRequestSerializer serializer];
+    NSURLRequest *request = [serializer requestWithMethod:@"GET"
+                                                URLString:@"http://test.com"
+                                               parameters:@{@"test":parameter}
+                                                    error:nil];
+    XCTAssertTrue([request.URL.query isEqualToString:@"test=%21%F0%9F%91%B4%F0%9F%8F%BF%F0%9F%91%B7%F0%9F%8F%BB%F0%9F%91%AE%F0%9F%8F%BD%F0%9F%91%B4%F0%9F%8F%BF%F0%9F%91%B7%F0%9F%8F%BB%F0%9F%91%AE%F0%9F%8F%BD%F0%9F%91%B4%F0%9F%8F%BF%F0%9F%91%B7%F0%9F%8F%BB%F0%9F%91%AE%F0%9F%8F%BD%F0%9F%91%B4%F0%9F%8F%BF%F0%9F%91%B7%F0%9F%8F%BB%F0%9F%91%AE%F0%9F%8F%BD%F0%9F%91%B4%F0%9F%8F%BF%F0%9F%91%B7%F0%9F%8F%BB%F0%9F%91%AE%F0%9F%8F%BD"]);
 }
 
 @end
